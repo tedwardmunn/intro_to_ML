@@ -1,0 +1,131 @@
+%% Reformatting the testing data
+load('a1digits.mat')
+
+testAdjusted = zeros(64, 400, 10);
+
+for i = 1:10
+    for j = 1:400
+        for k = 1:64
+            if (digits_test(k,j,i)>0.5)
+                testAdjusted(k,j,i) = 1;
+            else 
+                testAdjusted(k,j,i) = 0;
+            end
+        end 
+    end
+end
+
+save('a1digits.mat','testAdjusted', '-append')
+
+%% Reformatting the training data
+% load('a1digits.mat')
+
+trainAdjusted = zeros(64, 400, 10);
+
+for i = 1:10
+    for j = 1:700
+        for k = 1:64
+            if (digits_train(k,j,i)>0.5)
+                trainAdjusted(k,j,i) = 1;
+            else 
+                trainAdjusted(k,j,i) = 0;
+            end
+        end 
+    end
+end
+
+save('a1digits.mat','trainAdjusted','-append')
+
+%%
+%alphak = prior is the initial bias for prediction, should be the same since same
+%number of cases on each
+
+%phi^2 = variance
+%
+
+imagesc(reshape(testAdjusted(1:64,100,10),8,8));
+
+%% Finding the average of the binary data sets
+
+bayesAverages = zeros(64,10);
+
+for k = 1:10
+    for c = 1:64
+        bayesAverages(c,k) = sum(trainAdjusted(c,1:700,k))/700;
+    end
+end
+
+save('a1digits.mat','bayesAverages', '-append');
+
+%% Display the averages
+
+for k = 1:10
+    figure,imagesc(reshape(bayesAverages(1:64,k),8,8)'), colormap gray;
+end
+
+%% testing the built function
+% function [class] = bayesFunc(avg, testIn, classChoice, caseSrc)
+
+
+testClass = bayesFunc(bayesAverages, trainAdjusted, 10, 1);
+disp(testClass);
+% disp(testClass);
+
+%got stuck here with getting function to work, should be same structure as
+%the postProb function and differenet logic
+%% using the built function on testing data for predictions
+
+estimatesBayes = zeros(10,2);
+
+for k = 1:10
+    for c = 1:400
+        estimate = bayesFunc(bayesAverages, testAdjusted, k, c);
+        if (estimate == k)
+%           add to the number of correct classified
+            estimatesBayes (k,1) = estimatesBayes(k,1) + 1;
+        else
+%           add to the number of incorrect classified
+            estimatesBayes (k,2) = estimatesBayes(k,2) + 1;
+        end
+    end
+    
+end
+
+%% getting prediction statistics for the bayes classifier
+
+%a matrix of the percentages of correct classifications for each data point
+percentCorrectBayes = zeros(10,2);
+
+for k = 1:10
+   percentCorrectBayes(k,2) = k; 
+end
+
+for k = 1:10
+    percentCorrectBayes(k,1) = 100*(estimatesBayes(k,1)/400);
+end
+
+sumCorrect = 0;
+
+for k = 1:10
+    sumCorrect = sumCorrect + estimatesBayes(k,1);
+end
+
+%the percentage of correctly classified data points
+totalPerformanceBayes = 100*(sumCorrect/4000);
+
+%% trying a new function whcih returns probability that it's in a class
+
+classProbs = zeros(10,2);
+
+for k = 1
+
+for k = 1:10
+    classProbs(k,1) = bayesProb(bayesAverages, trainAdjusted,10,1,k);
+%     disp(classProbs(k,1));
+end
+
+disp(classProbs);
+
+
+
+
